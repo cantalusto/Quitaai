@@ -16,16 +16,13 @@ export function Logo({ className, showText = true, size = 32 }: LogoProps) {
         width={size}
         height={size}
         priority
-        className="shrink-0 rounded-lg"
+        className="shrink-0 rounded-xl"
         style={{ width: size, height: size }}
       />
       {showText && (
-        <div className="flex items-baseline gap-1.5 leading-none">
-          <span className="text-xl font-bold tracking-tight">Quita</span>
-          <span className="text-xl font-bold tracking-tight text-primary italic">
-            aí
-          </span>
-        </div>
+        <span className="text-base font-medium tracking-tight lowercase">
+          quita<span className="text-primary">.aí</span>
+        </span>
       )}
     </div>
   );

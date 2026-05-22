@@ -9,16 +9,17 @@ import {
   pagoEmprestimo,
   useStore,
 } from "@/lib/store";
-import { Button } from "@/components/ui/button";
-import { formatBRL, formatDate, toISODate } from "@/lib/utils";
+import { formatBRL, toISODate } from "@/lib/utils";
 import {
   ArrowRight,
   Banknote,
+  Bell,
   CheckCircle2,
   MessageCircle,
   ShoppingCart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LiveClock } from "@/components/live-clock";
 
 type CobrancaItem = {
   id: string;
@@ -31,14 +32,18 @@ type CobrancaItem = {
   saldo: number;
   vencimento: string;
   status: "atrasado" | "hoje" | "proximo";
+  diasAtraso: number;
 };
 
-export default function DashboardPage() {
+const SHOP_OWNER = "Dona Iracema"; // TODO: configurável depois
+
+export default function HomePage() {
   const { db, ready } = useStore();
 
   const itens = useMemo<CobrancaItem[]>(() => {
     if (!ready) return [];
     const hoje = toISODate(new Date());
+    const today = new Date(hoje);
     const list: CobrancaItem[] = [];
 
     db.vendas
@@ -51,6 +56,10 @@ export default function DashboardPage() {
         const venc = v.vencimento!;
         const status: CobrancaItem["status"] =
           venc < hoje ? "atrasado" : venc === hoje ? "hoje" : "proximo";
+        const diasAtraso =
+          venc < hoje
+            ? Math.round((today.getTime() - new Date(venc).getTime()) / 86400000)
+            : 0;
         list.push({
           id: v.id,
           tipo: "venda",
@@ -62,6 +71,7 @@ export default function DashboardPage() {
           saldo,
           vencimento: venc,
           status,
+          diasAtraso,
         });
       });
 
@@ -72,6 +82,12 @@ export default function DashboardPage() {
       if (!cliente) return;
       const status: CobrancaItem["status"] =
         e.vencimento < hoje ? "atrasado" : e.vencimento === hoje ? "hoje" : "proximo";
+      const diasAtraso =
+        e.vencimento < hoje
+          ? Math.round(
+              (today.getTime() - new Date(e.vencimento).getTime()) / 86400000
+            )
+          : 0;
       list.push({
         id: e.id,
         tipo: "emprestimo",
@@ -83,160 +99,212 @@ export default function DashboardPage() {
         saldo,
         vencimento: e.vencimento,
         status,
+        diasAtraso,
       });
     });
 
-    return list.sort((a, b) => a.vencimento.localeCompare(b.vencimento));
+    return list.sort((a, b) => {
+      if (a.status !== b.status) {
+        const order = { atrasado: 0, hoje: 1, proximo: 2 };
+        return order[a.status] - order[b.status];
+      }
+      return b.saldo - a.saldo;
+    });
   }, [db, ready]);
 
-  const atrasados = itens.filter((i) => i.status === "atrasado");
-  const hoje = itens.filter((i) => i.status === "hoje");
-  const proximos = itens.filter((i) => i.status === "proximo");
-
-  const totalReceber = itens.reduce((acc, i) => acc + i.saldo, 0);
-  const urgentes = [...atrasados, ...hoje];
+  const urgentes = itens.filter(
+    (i) => i.status === "hoje" || i.status === "atrasado"
+  );
   const totalUrgente = urgentes.reduce((acc, i) => acc + i.saldo, 0);
+  const atrasados = urgentes.filter((i) => i.status === "atrasado").length;
+  const clientesUnicos = new Set(urgentes.map((i) => i.clienteId)).size;
 
-  const ola = saudacao();
+  const [reais, centavos] = formatBRL(totalUrgente)
+    .replace("R$ ", "")
+    .split(",");
 
   return (
-    <div className="max-w-2xl mx-auto px-5 sm:px-8 py-6 lg:py-10">
-      {/* Saudação */}
-      <div className="mb-7">
-        <p className="text-sm text-muted-foreground">{ola}</p>
-        <h1 className="text-2xl font-bold tracking-tight mt-0.5">
-          Bom te ver aqui 👋
+    <div className="lg:grid lg:grid-cols-[1fr_360px] lg:gap-6 lg:px-8 lg:py-6">
+      {/* Coluna esquerda */}
+      <div className="px-5 sm:px-8 lg:px-0 py-6 lg:py-0">
+        {/* Data ao vivo */}
+        <p className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground mb-6">
+          <LiveClock />
+        </p>
+
+        {/* Greeting */}
+        <h1 className="font-display font-bold text-4xl sm:text-5xl lg:text-6xl leading-[0.95] tracking-tight">
+          Bora cobrar,
+          <br />
+          <span className="text-muted-foreground">{SHOP_OWNER}.</span>
         </h1>
+
+        {/* Divisor com label */}
+        <div className="flex items-center justify-between mt-8 mb-3">
+          <span className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground">
+            Tá na conta <span className="opacity-50">·</span> hoje
+          </span>
+          {totalUrgente > 0 && (
+            <span className="flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-widest text-primary">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              Cobrar
+            </span>
+          )}
+        </div>
+        <div className="h-px bg-border" />
+
+        {/* Hero R$ */}
+        <div className="mt-6 mb-6">
+          <p className="font-display font-bold leading-none tracking-tight flex items-baseline">
+            <span className="text-2xl sm:text-3xl text-muted-foreground mr-2">R$</span>
+            <span className="text-6xl sm:text-7xl lg:text-8xl">
+              {reais || "0"}
+            </span>
+            <span className="text-3xl sm:text-4xl lg:text-5xl text-primary">
+              ,{centavos || "00"}
+            </span>
+          </p>
+        </div>
+
+        {/* Stats inline */}
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-mono uppercase tracking-widest text-muted-foreground mb-8">
+          <span>
+            {clientesUnicos} cliente{clientesUnicos !== 1 ? "s" : ""}
+          </span>
+          {atrasados > 0 && (
+            <>
+              <span className="opacity-30">·</span>
+              <span className="text-destructive">
+                {atrasados} atrasado{atrasados !== 1 ? "s" : ""}
+              </span>
+            </>
+          )}
+          <span className="opacity-30">·</span>
+          <span>{itens.length} total</span>
+        </div>
+
+        {/* Ações */}
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
+          <ActionCard
+            href="/vendas/nova"
+            icon={ShoppingCart}
+            title="Nova venda"
+            sub="Fiado · À vista · Prazo"
+            primary
+          />
+          <ActionCard
+            href="/emprestimos/novo"
+            icon={Banknote}
+            title="Empréstimo"
+            sub="Dinheiro emprestado"
+          />
+          <ActionCard
+            href="/clientes"
+            icon={Bell}
+            title="Lembrete"
+            sub="Zap em massa"
+            className="hidden lg:flex"
+          />
+        </div>
       </div>
 
-      {/* Hero card — total a receber */}
-      <div className="rounded-3xl bg-card p-6 mb-3">
-        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-          Você tem a receber
-        </p>
-        <p className="text-4xl sm:text-5xl font-bold font-mono mt-2 tracking-tight">
-          {formatBRL(totalReceber)}
-        </p>
-        {totalUrgente > 0 && (
-          <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground">Cobrar agora</p>
-              <p className="font-mono font-semibold text-primary">
-                {formatBRL(totalUrgente)}
-              </p>
-            </div>
-            <span className="text-xs px-2.5 py-1 rounded-full bg-primary/15 text-primary font-medium">
-              {urgentes.length} pessoa{urgentes.length > 1 ? "s" : ""}
+      {/* Coluna direita (mobile: abaixo; PC: aside) */}
+      <aside className="px-5 sm:px-8 lg:px-0 lg:pt-0">
+        <div className="lg:rounded-2xl lg:bg-card lg:border lg:border-border lg:p-5 lg:sticky lg:top-20">
+          <div className="flex items-baseline justify-between mb-4">
+            <h2 className="font-display font-bold text-2xl tracking-tight">
+              Pra hoje
+            </h2>
+            <span className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground">
+              {String(urgentes.length).padStart(2, "0")} /{" "}
+              {String(itens.length).padStart(2, "0")}
             </span>
           </div>
-        )}
-      </div>
 
-      {/* Ações rápidas */}
-      <div className="grid grid-cols-2 gap-3 mb-8">
-        <Link
-          href="/vendas/nova"
-          className="rounded-3xl bg-primary text-primary-foreground p-5 flex flex-col gap-3 hover:opacity-95 transition-opacity min-h-[120px]"
-        >
-          <div className="w-11 h-11 rounded-full bg-black/15 flex items-center justify-center">
-            <ShoppingCart className="h-5 w-5" />
-          </div>
-          <div className="flex items-end justify-between mt-auto">
-            <div>
-              <p className="font-semibold">Nova venda</p>
-              <p className="text-xs opacity-80">Registrar compra</p>
+          {itens.length === 0 ? (
+            <div className="py-10 text-center">
+              <div className="w-14 h-14 rounded-full bg-card border border-border flex items-center justify-center mx-auto mb-3">
+                <CheckCircle2 className="h-6 w-6 text-primary" />
+              </div>
+              <p className="font-display font-bold">Tudo em dia.</p>
+              <p className="text-xs uppercase tracking-wider text-muted-foreground mt-1">
+                Sem cobranças pendentes
+              </p>
             </div>
-            <ArrowRight className="h-4 w-4 opacity-80" />
-          </div>
-        </Link>
-        <Link
-          href="/emprestimos/novo"
-          className="rounded-3xl bg-card p-5 flex flex-col gap-3 hover:bg-muted/60 transition-colors min-h-[120px] border border-border"
-        >
-          <div className="w-11 h-11 rounded-full bg-secondary flex items-center justify-center">
-            <Banknote className="h-5 w-5 text-primary" />
-          </div>
-          <div className="flex items-end justify-between mt-auto">
-            <div>
-              <p className="font-semibold">Empréstimo</p>
-              <p className="text-xs text-muted-foreground">Dinheiro emprestado</p>
-            </div>
-            <ArrowRight className="h-4 w-4 text-muted-foreground" />
-          </div>
-        </Link>
-      </div>
+          ) : (
+            <ul className="space-y-1 -mx-2">
+              {urgentes.slice(0, 6).map((i) => (
+                <CobrancaRow key={`${i.tipo}-${i.id}`} item={i} />
+              ))}
+              {urgentes.length === 0 &&
+                itens.slice(0, 6).map((i) => (
+                  <CobrancaRow key={`${i.tipo}-${i.id}`} item={i} />
+                ))}
+            </ul>
+          )}
 
-      {/* Listas */}
-      {urgentes.length > 0 && (
-        <Section title="Para cobrar agora" tone="urgent">
-          {urgentes.map((i) => (
-            <CobrancaRow key={`${i.tipo}-${i.id}`} item={i} />
-          ))}
-        </Section>
-      )}
-
-      {proximos.length > 0 && (
-        <Section title="Próximas cobranças" tone="normal">
-          {proximos.slice(0, 5).map((i) => (
-            <CobrancaRow key={`${i.tipo}-${i.id}`} item={i} />
-          ))}
-        </Section>
-      )}
-
-      {itens.length === 0 && (
-        <div className="rounded-3xl bg-card p-10 text-center">
-          <div className="w-14 h-14 rounded-full bg-success/15 flex items-center justify-center mx-auto mb-4">
-            <CheckCircle2 className="h-7 w-7 text-[color:var(--success)]" />
-          </div>
-          <h3 className="font-semibold text-lg">Tudo em dia!</h3>
-          <p className="text-sm text-muted-foreground mt-1 mb-5 max-w-xs mx-auto">
-            Não há cobranças pendentes. Comece registrando uma nova venda.
-          </p>
-          <Button asChild>
-            <Link href="/vendas/nova">
-              <ShoppingCart className="h-4 w-4" />
-              Nova venda
+          {itens.length > 6 && (
+            <Link
+              href="/clientes"
+              className="block mt-4 text-center text-xs uppercase tracking-widest font-mono py-2.5 rounded-xl border border-border hover:bg-muted transition-colors"
+            >
+              Ver caderneta toda <ArrowRight className="inline h-3 w-3" />
             </Link>
-          </Button>
+          )}
         </div>
-      )}
+      </aside>
     </div>
   );
 }
 
-function saudacao(): string {
-  const h = new Date().getHours();
-  if (h < 12) return "Bom dia";
-  if (h < 18) return "Boa tarde";
-  return "Boa noite";
-}
-
-function Section({
+function ActionCard({
+  href,
+  icon: Icon,
   title,
-  tone,
-  children,
+  sub,
+  primary,
+  className,
 }: {
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
   title: string;
-  tone: "urgent" | "normal";
-  children: React.ReactNode;
+  sub: string;
+  primary?: boolean;
+  className?: string;
 }) {
   return (
-    <section className="mb-7">
-      <div className="flex items-center gap-2 mb-3 px-2">
-        <span
-          className={cn(
-            "w-1.5 h-1.5 rounded-full",
-            tone === "urgent" ? "bg-destructive" : "bg-muted-foreground/50"
-          )}
-        />
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+    <Link
+      href={href}
+      className={cn(
+        "rounded-2xl p-4 sm:p-5 flex flex-col justify-between min-h-[130px] sm:min-h-[150px] transition-all active:scale-[0.98]",
+        primary
+          ? "bg-primary text-primary-foreground hover:opacity-95"
+          : "bg-card border border-border hover:border-primary/40",
+        className
+      )}
+    >
+      <div
+        className={cn(
+          "w-10 h-10 rounded-xl flex items-center justify-center",
+          primary ? "bg-black/15" : "bg-muted"
+        )}
+      >
+        <Icon className={cn("h-5 w-5", !primary && "text-primary")} />
+      </div>
+      <div>
+        <p className="font-display font-bold text-lg sm:text-xl leading-tight">
           {title}
-        </h2>
+        </p>
+        <p
+          className={cn(
+            "text-[10px] uppercase tracking-widest mt-1",
+            primary ? "opacity-75" : "text-muted-foreground"
+          )}
+        >
+          {sub} <ArrowRight className="inline h-3 w-3" />
+        </p>
       </div>
-      <div className="rounded-3xl bg-card divide-y divide-border overflow-hidden">
-        {children}
-      </div>
-    </section>
+    </Link>
   );
 }
 
@@ -250,16 +318,16 @@ function CobrancaRow({ item }: { item: CobrancaItem }) {
 
   const statusTxt =
     item.status === "atrasado"
-      ? "Atrasado"
+      ? `Atrasado ${item.diasAtraso}d`
       : item.status === "hoje"
-      ? "Vence hoje"
-      : formatDate(item.vencimento);
+      ? "Hoje"
+      : "Próximo";
 
   const statusColor =
     item.status === "atrasado"
       ? "text-destructive"
       : item.status === "hoje"
-      ? "text-[color:var(--warning)]"
+      ? "text-primary"
       : "text-muted-foreground";
 
   const msg = encodeURIComponent(
@@ -269,28 +337,44 @@ function CobrancaRow({ item }: { item: CobrancaItem }) {
   );
 
   return (
-    <div className="flex items-center gap-3 p-4 hover:bg-muted/40 transition-colors">
-      <div className="w-11 h-11 rounded-full bg-secondary text-foreground/80 flex items-center justify-center font-semibold text-sm shrink-0">
-        {initials}
-      </div>
-      <Link href={`/clientes/${item.clienteId}`} className="flex-1 min-w-0">
-        <p className="font-medium truncate">{item.clienteNome}</p>
-        <p className={cn("text-xs mt-0.5", statusColor)}>{statusTxt}</p>
-      </Link>
-      <div className="flex flex-col items-end gap-1.5">
-        <p className="font-mono font-semibold">{formatBRL(item.saldo)}</p>
-        {item.telefone && (
-          <a
-            href={`https://wa.me/${item.telefone.replace(/\D/g, "")}?text=${msg}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-primary/15 text-primary hover:bg-primary/25 transition-colors inline-flex items-center gap-1"
+    <li>
+      <div className="flex items-center gap-3 px-2 py-2.5 rounded-xl hover:bg-muted/50 transition-colors">
+        <div
+          className={cn(
+            "w-10 h-10 rounded-full flex items-center justify-center font-display font-bold text-sm shrink-0 border-2",
+            item.status === "atrasado"
+              ? "border-destructive/50 text-destructive bg-destructive/10"
+              : "border-primary/40 text-foreground bg-card"
+          )}
+        >
+          {initials}
+        </div>
+        <Link href={`/clientes/${item.clienteId}`} className="flex-1 min-w-0">
+          <p className="font-medium truncate">{item.clienteNome}</p>
+          <p
+            className={cn(
+              "text-[10px] uppercase tracking-widest font-mono mt-0.5",
+              statusColor
+            )}
           >
-            <MessageCircle className="h-3 w-3" />
-            Cobrar
-          </a>
-        )}
+            {statusTxt}
+          </p>
+        </Link>
+        <div className="flex items-center gap-2 shrink-0">
+          <p className="font-mono font-bold text-sm">{formatBRL(item.saldo)}</p>
+          {item.telefone && (
+            <a
+              href={`https://wa.me/${item.telefone.replace(/\D/g, "")}?text=${msg}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Cobrar via WhatsApp"
+              className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:scale-105 transition-transform"
+            >
+              <MessageCircle className="h-4 w-4" />
+            </a>
+          )}
+        </div>
       </div>
-    </div>
+    </li>
   );
 }

@@ -4,54 +4,54 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Quita aí — Light (off-white quente + dourado) */
-  --background: #faf7f0;
-  --foreground: #14181f;
+  /* Quita aí — Light (editorial) */
+  --background: #fafafa;
+  --foreground: #0a0a0a;
   --card: #ffffff;
-  --card-foreground: #14181f;
+  --card-foreground: #0a0a0a;
   --popover: #ffffff;
-  --popover-foreground: #14181f;
-  --primary: #c9931a;
-  --primary-foreground: #ffffff;
-  --secondary: #f0ebe0;
-  --secondary-foreground: #14181f;
-  --muted: #f0ebe0;
-  --muted-foreground: #5b6470;
-  --accent: #e8b341;
-  --accent-foreground: #14181f;
-  --destructive: #c2410c;
+  --popover-foreground: #0a0a0a;
+  --primary: #8fbf00;
+  --primary-foreground: #0a0a0a;
+  --secondary: #f0f0f0;
+  --secondary-foreground: #0a0a0a;
+  --muted: #f0f0f0;
+  --muted-foreground: #666666;
+  --accent: #c6f432;
+  --accent-foreground: #0a0a0a;
+  --destructive: #dc2626;
   --destructive-foreground: #ffffff;
-  --success: #059669;
+  --success: #16a34a;
   --warning: #ea580c;
-  --border: #e5e0d2;
-  --input: #e5e0d2;
-  --ring: #c9931a;
-  --radius: 0.75rem;
+  --border: #e5e5e5;
+  --input: #e5e5e5;
+  --ring: #c6f432;
+  --radius: 1rem;
 }
 
 .dark {
-  /* Quita aí — Dark (grafite azulado + dourado) */
-  --background: #0f1419;
-  --foreground: #f5f1e8;
-  --card: #1a2028;
-  --card-foreground: #f5f1e8;
-  --popover: #1a2028;
-  --popover-foreground: #f5f1e8;
-  --primary: #d4a017;
-  --primary-foreground: #0f1419;
-  --secondary: #242c36;
-  --secondary-foreground: #f5f1e8;
-  --muted: #242c36;
-  --muted-foreground: #a3adba;
-  --accent: #f0c04a;
-  --accent-foreground: #0f1419;
+  /* Quita aí — Dark (editorial: preto + lime) */
+  --background: #0a0a0a;
+  --foreground: #f5f5f5;
+  --card: #161616;
+  --card-foreground: #f5f5f5;
+  --popover: #1a1a1a;
+  --popover-foreground: #f5f5f5;
+  --primary: #c6f432;
+  --primary-foreground: #0a0a0a;
+  --secondary: #1f1f1f;
+  --secondary-foreground: #f5f5f5;
+  --muted: #1a1a1a;
+  --muted-foreground: #999999;
+  --accent: #c6f432;
+  --accent-foreground: #0a0a0a;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --border: #2a323d;
-  --input: #2a323d;
-  --ring: #d4a017;
+  --success: #c6f432;
+  --warning: #fbbf24;
+  --border: #262626;
+  --input: #262626;
+  --ring: #c6f432;
 }
 
 @theme inline {
@@ -77,11 +77,13 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --font-sans: var(--font-inter);
+  --font-display: var(--font-bricolage);
   --font-mono: var(--font-jetbrains);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 8px);
+  --radius-md: calc(var(--radius) - 4px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
 }
 
 * {
@@ -89,7 +91,6 @@
 }
 
 html {
-  /* Reserva espaço pra scrollbar — evita "balanço" lateral ao scrollar */
   scrollbar-gutter: stable;
 }
 
@@ -101,15 +102,31 @@ body {
   overscroll-behavior-y: none;
 }
 
+.font-display {
+  font-family: var(--font-bricolage), var(--font-inter), system-ui, sans-serif;
+  font-feature-settings: "ss01", "ss02";
+  letter-spacing: -0.03em;
+}
+
 .font-mono,
 .tabular {
   font-family: var(--font-jetbrains), ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
 }
 
-/* Brilho sutil no dourado pra dar vida */
-.text-primary {
-  text-shadow: 0 0 30px rgba(212, 160, 23, 0.15);
+/* Pill / bullet usado nos labels */
+.bullet::before {
+  content: "·";
+  margin: 0 0.4em;
+  opacity: 0.6;
+}
+
+/* Cor "viva" do lime — usar como destaque pontual */
+.text-lime {
+  color: #c6f432;
+}
+.bg-lime {
+  background-color: #c6f432;
 }
 
 ::-webkit-scrollbar {
@@ -120,9 +137,9 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--muted);
+  background: var(--border);
   border-radius: 6px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--secondary);
+  background: var(--muted-foreground);
 }
