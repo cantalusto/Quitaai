@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Quita aí — Controle. Cobre. Receba.
 
-## Getting Started
+App de controle de fiado, crediário e empréstimos para açougues, padarias e comércios populares. Cadastra clientes/produtos, faz vendas, marca prazo, calcula juros, e envia cobranças no WhatsApp.
 
-First, run the development server:
+## Stack
+
+- **Next.js 16** (App Router, Turbopack)
+- **TypeScript** + **Tailwind v4**
+- **shadcn-like UI** custom (sem dependência pesada)
+- **next-themes** (dark/light)
+- **Sonner** (toasts)
+- **localStorage** como persistência (data layer trocável por Supabase)
+- **PWA** instalável
+
+## Rodando localmente
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Acessa em http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+> Os dados ficam no `localStorage` do navegador. Vem com um seed (Tete Nazaré, João da Esquina e 5 produtos) na primeira vez que abre.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Build de produção
 
-## Learn More
+```bash
+npm run build
+npm run start
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Deploy na Vercel
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Sobe esse repositório no GitHub
+2. Vai em https://vercel.com/new
+3. Importa o repo
+4. Vercel detecta Next.js automaticamente — **não precisa configurar env vars** (a versão atual usa localStorage)
+5. Clica **Deploy**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Pronto. Em ~1 min o app tá no ar com domínio `*.vercel.app`.
 
-## Deploy on Vercel
+### Variáveis de ambiente (futuro)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Quando migrar pra Supabase/Postgres, adicionar:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+```
+
+## Estrutura
+
+```
+src/
+  app/
+    page.tsx              → Início (cobranças do dia)
+    painel/page.tsx       → Painel (insights/analytics)
+    clientes/             → CRUD + conta do cliente
+    produtos/             → CRUD
+    vendas/nova/          → PDV (3 modalidades)
+    emprestimos/novo/     → Empréstimo em dinheiro
+  components/
+    ui/                   → primitivos (Button, Card, Dialog…)
+    app-shell.tsx         → layout responsivo (sidebar PC / bottom nav mobile)
+    notifications-drawer.tsx → painel de notificações (Portal)
+    logo.tsx              → logo SVG
+  lib/
+    store.tsx             → camada de dados (localStorage + helpers)
+    types.ts              → tipos
+    utils.ts              → helpers (formatBRL, datas, cn…)
+```
+
+## Identidade
+
+- Nome: **Quita aí** — trocadilho com "quita.ai" (paga aí, acerta aí)
+- Tagline: **Controle · Cobre · Receba**
+- Paleta: grafite azulado + dourado
+- Tipografia: Inter + JetBrains Mono (valores)
