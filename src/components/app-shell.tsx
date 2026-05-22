@@ -16,6 +16,9 @@ import { Logo } from "./logo";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
+import { X, ArrowRight } from "lucide-react";
 import { NotificationBell } from "./notifications-drawer";
 
 // Bottom nav mobile (5 itens com FAB central)
@@ -39,6 +42,7 @@ const sidebarItems = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
@@ -101,22 +105,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               const active = isActive(pathname, item.href);
               if (item.primary) {
                 return (
-                  <Link
+                  <button
                     key={item.href}
-                    href={item.href}
+                    onClick={() => setSheetOpen(true)}
+                    aria-label="Nova transação"
                     className="flex flex-col items-center justify-center -mt-5"
                   >
                     <div
                       className={cn(
                         "w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all",
-                        active
+                        sheetOpen
                           ? "bg-accent text-accent-foreground scale-105"
                           : "bg-primary text-primary-foreground"
                       )}
                     >
                       <Icon className="h-6 w-6" />
                     </div>
-                  </Link>
+                  </button>
                 );
               }
               return (
@@ -138,7 +143,111 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </nav>
       </div>
+
+      <ActionSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
     </div>
+  );
+}
+
+function ActionSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [open, onClose]);
+
+  if (!mounted || !open) return null;
+
+  function go(href: string) {
+    onClose();
+    router.push(href);
+  }
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[100] flex items-end sm:items-center sm:justify-center lg:hidden"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+        onClick={onClose}
+      />
+
+      <div className="relative w-full sm:max-w-sm bg-card rounded-t-3xl sm:rounded-3xl shadow-2xl animate-in slide-in-from-bottom duration-300 pb-[env(safe-area-inset-bottom)]">
+        {/* Pull handle */}
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 rounded-full bg-muted" />
+        </div>
+
+        <div className="flex items-center justify-between px-5 pt-2 pb-1">
+          <h2 className="text-lg font-bold">Nova transação</h2>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-full hover:bg-muted"
+            aria-label="Fechar"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <p className="px-5 text-sm text-muted-foreground -mt-1 mb-3">
+          O que você quer registrar?
+        </p>
+
+        <div className="p-3 space-y-2">
+          <button
+            onClick={() => go("/vendas/nova")}
+            className="w-full flex items-center gap-4 p-4 rounded-2xl bg-primary text-primary-foreground hover:opacity-95 active:scale-[0.99] transition-all text-left"
+          >
+            <div className="w-11 h-11 rounded-full bg-black/15 flex items-center justify-center shrink-0">
+              <ShoppingCart className="h-5 w-5" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold">Nova venda</p>
+              <p className="text-xs opacity-80">Registrar compra de cliente</p>
+            </div>
+            <ArrowRight className="h-5 w-5 opacity-70" />
+          </button>
+
+          <button
+            onClick={() => go("/emprestimos/novo")}
+            className="w-full flex items-center gap-4 p-4 rounded-2xl bg-muted hover:bg-secondary active:scale-[0.99] transition-all text-left"
+          >
+            <div className="w-11 h-11 rounded-full bg-card flex items-center justify-center shrink-0">
+              <Banknote className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold">Empréstimo</p>
+              <p className="text-xs text-muted-foreground">
+                Emprestar dinheiro com juros
+              </p>
+            </div>
+            <ArrowRight className="h-5 w-5 text-muted-foreground" />
+          </button>
+        </div>
+
+        <div className="px-5 pb-5 pt-2">
+          <button
+            onClick={onClose}
+            className="w-full py-2.5 rounded-xl text-sm text-muted-foreground hover:bg-muted transition-colors"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 
