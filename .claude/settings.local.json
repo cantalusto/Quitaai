@@ -4,7 +4,10 @@
       "Bash(npm --version)",
       "Bash(npx --yes create-next-app@latest . --typescript --tailwind --app --src-dir --import-alias \"@/*\" --use-npm --yes --no-eslint --turbopack)",
       "Bash(npm install *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'feat: melhora legibilidade dos labels editoriais *)",
+      "Bash(git push *)"
     ]
   }
 }

@@ -128,7 +128,7 @@ export default function HomePage() {
       {/* Coluna esquerda */}
       <div className="px-5 sm:px-8 lg:px-0 py-6 lg:py-0">
         {/* Data ao vivo */}
-        <p className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground mb-6">
+        <p className="text-[12px] font-mono uppercase tracking-wider text-muted-foreground mb-6">
           <LiveClock />
         </p>
 
@@ -136,12 +136,12 @@ export default function HomePage() {
         <h1 className="font-display font-bold text-4xl sm:text-5xl lg:text-6xl leading-[0.95] tracking-tight">
           Bora cobrar,
           <br />
-          <span className="text-muted-foreground">{SHOP_OWNER}.</span>
+          <span className="text-foreground/60">{SHOP_OWNER}.</span>
         </h1>
 
         {/* Divisor com label */}
         <div className="flex items-center justify-between mt-8 mb-3">
-          <span className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground">
+          <span className="text-[12px] font-mono uppercase tracking-wider text-muted-foreground">
             Tá na conta <span className="opacity-50">·</span> hoje
           </span>
           {totalUrgente > 0 && (
@@ -156,7 +156,7 @@ export default function HomePage() {
         {/* Hero R$ */}
         <div className="mt-6 mb-6">
           <p className="font-display font-bold leading-none tracking-tight flex items-baseline">
-            <span className="text-2xl sm:text-3xl text-muted-foreground mr-2">R$</span>
+            <span className="text-2xl sm:text-3xl text-foreground/70 mr-2">R$</span>
             <span className="text-6xl sm:text-7xl lg:text-8xl">
               {reais || "0"}
             </span>
@@ -167,7 +167,7 @@ export default function HomePage() {
         </div>
 
         {/* Stats inline */}
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-mono uppercase tracking-widest text-muted-foreground mb-8">
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] font-mono uppercase tracking-wider text-muted-foreground mb-8">
           <span>
             {clientesUnicos} cliente{clientesUnicos !== 1 ? "s" : ""}
           </span>
@@ -215,7 +215,7 @@ export default function HomePage() {
             <h2 className="font-display font-bold text-2xl tracking-tight">
               Pra hoje
             </h2>
-            <span className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground">
+            <span className="text-[12px] font-mono uppercase tracking-wider text-muted-foreground">
               {String(urgentes.length).padStart(2, "0")} /{" "}
               {String(itens.length).padStart(2, "0")}
             </span>
@@ -297,8 +297,8 @@ function ActionCard({
         </p>
         <p
           className={cn(
-            "text-[10px] uppercase tracking-widest mt-1",
-            primary ? "opacity-75" : "text-muted-foreground"
+            "text-[11px] uppercase tracking-wider mt-1 font-medium",
+            primary ? "opacity-80" : "text-muted-foreground"
           )}
         >
           {sub} <ArrowRight className="inline h-3 w-3" />
@@ -353,7 +353,7 @@ function CobrancaRow({ item }: { item: CobrancaItem }) {
           <p className="font-medium truncate">{item.clienteNome}</p>
           <p
             className={cn(
-              "text-[10px] uppercase tracking-widest font-mono mt-0.5",
+              "text-[11px] uppercase tracking-wider font-mono font-medium mt-0.5",
               statusColor
             )}
           >
